@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.Windows;
 using static Unity.VisualScripting.Member;
 using Input = UnityEngine.Input;
@@ -14,10 +15,42 @@ public class WavesGenerator : MonoBehaviour
     SquareWave squareAudioWave;
     SinusWave sinusAudioWave;
 
-    SinusWave amplitudeModulationOscillator;
+    SinusWave mainAmplitudeModulationOscillator;
+    SinusWave sinusAmplitudeModulationOscillator;
+    SinusWave sawAmplitudeModulationOscillator;
+    SinusWave squareAmplitudeModulationOscillator;
+
     SinusWave frequencyModulationOscillator;
 
     public bool randomPlay;
+
+    [Header("UI")]
+    [Header("Main")]
+    public Toggle mainAmpModToggle;
+    public Slider mainAmpModSlider;
+    public Toggle mainFreqModToggle;
+    public Slider mainFreqModSlider;
+
+    [Header("Sinus")]
+    public Toggle sinusToggle;
+    public Slider sinusIntensitySlider;
+    public Slider sinusFrequencySlider;
+    public Toggle sinusAmpModToggle;
+    public Slider sinusAmpModSlider;
+
+    [Header("Saw")]
+    public Toggle sawToggle;
+    public Slider sawIntensitySlider;
+    public Slider sawFrequencySlider;
+    public Toggle sawAmpModToggle;
+    public Slider sawAmpModSlider;
+
+    [Header("Square")]
+    public Toggle squareToggle;
+    public Slider squareIntensitySlider;
+    public Slider squareFrequencySlider;
+    public Toggle squareAmpModToggle;
+    public Slider squareAmpModSlider;
 
     [Header("Volume / Frequency")]
     [Range(0.0f, 1.0f)]
@@ -26,24 +59,47 @@ public class WavesGenerator : MonoBehaviour
     public double mainFrequency = 500;
 
     [Header("Tone Adjustment")]
+    [Header("Sinus")]
     public bool useSinusAudioWave;
     [Range(0.0f, 1.0f)]
     public float sinusAudioWaveIntensity = 0.25f;
+    [Range(-100, 2000)]
+    public double sinusFrequency = 0;
 
+    [Space(5)]
     public bool useSinusAmplitudeModulation;
     [Range(0.0f, 1.0f)]
     public float sinusAmplitudeModulationRangeOut;
     [Range(0.2f, 30.0f)]
     public float sinusAmplitudeModulationOscillatorFrequency = 1.0f;
 
-    [Space(5)]
+    [Header("Square")]
     public bool useSquareAudioWave;
     [Range(0.0f, 1.0f)]
     public float squareAudioWaveIntensity = 0.25f;
+    [Range(-100, 2000)]
+    public double squareFrequency = 0;
+
     [Space(5)]
+    public bool useSquareAmplitudeModulation;
+    [Range(0.0f, 1.0f)]
+    public float squareAmplitudeModulationRangeOut;
+    [Range(0.2f, 30.0f)]
+    public float squareAmplitudeModulationOscillatorFrequency = 1.0f;
+
+    [Header("Saw")]
     public bool useSawAudioWave;
     [Range(0.0f, 1.0f)]
     public float sawAudioWaveIntensity = 0.25f;
+    [Range(-100, 2000)]
+    public double sawFrequency = 0;
+
+    [Space(5)]
+    public bool useSawAmplitudeModulation;
+    [Range(0.0f, 1.0f)]
+    public float sawAmplitudeModulationRangeOut;
+    [Range(0.2f, 30.0f)]
+    public float sawAmplitudeModulationOscillatorFrequency = 1.0f;
 
     [Header("Amplitude Modulation")]
     public bool useAmplitudeModulation;
@@ -62,30 +118,22 @@ public class WavesGenerator : MonoBehaviour
     [Range(0.0f, 1.0f)]
     public float frequencyModulationRangeOut;
 
-    float mainFrequencyPreviousValue;
-    private System.Random RandomNumber = new System.Random();
-
     private double dataLen;
     double chunkTime;
     double dspTimeStep;
     double currentDspTime;
 
-    [Header("Sine")]
-    [SerializeField, Range(0, 1)] private float sineAmplitude = 0.5f;
-    [SerializeField] private float sineFrequency = 261.62f; //middle c
-    private double _sinePhase;
+    //[Header("Sine")]
+    //[SerializeField, Range(0, 1)] private float sineAmplitude = 0.5f;
+    //[SerializeField] private float sineFrequency = 261.62f; //middle c
+    //private double _sinePhase;
 
-    [Header("Saw")]
-    [SerializeField, Range(0, 1)] private float sawAmplitude = 0.5f;
-    [SerializeField] private float sawFrequency = 261.62f; //middle c
-    private double _sawPhase;
+    //[Header("Saw")]
+    //[SerializeField, Range(0, 1)] private float sawAmplitude = 0.5f;
+    //[SerializeField] private float sawFrequency = 261.62f; //middle c
+    //private double _sawPhase;
 
     private int _sampleRate;
-
-    float value = 0;
-
-    private bool playingSine;
-    private bool playingSaw;
 
     private void Awake()
     {
@@ -95,7 +143,11 @@ public class WavesGenerator : MonoBehaviour
         squareAudioWave = new SquareWave();
         sinusAudioWave = new SinusWave();
 
-        amplitudeModulationOscillator = new SinusWave();
+        mainAmplitudeModulationOscillator = new SinusWave();
+        sinusAmplitudeModulationOscillator = new SinusWave();
+        sawAmplitudeModulationOscillator = new SinusWave();
+        squareAmplitudeModulationOscillator = new SinusWave();
+
         frequencyModulationOscillator = new SinusWave();
 
         _sampleRate = AudioSettings.outputSampleRate;
@@ -113,8 +165,14 @@ public class WavesGenerator : MonoBehaviour
         for (int i = 0; i < dataLen; i++)
         {
             preciseDspTime = currentDspTime + i * dspTimeStep;
-            double signalValue = 0.0;
+            double sinusSignal = 0.0;
+            double sawSignal = 0.0;
+            double squareSignal = 0.0;
+
             double currentFreq = mainFrequency;
+            double sinusFreq = sinusFrequency;
+            double sawFreq = sawFrequency;
+            double squareFreq = squareFrequency;
 
             if (useFrequencyModulation)
             {
@@ -129,28 +187,41 @@ public class WavesGenerator : MonoBehaviour
 
             if (useSinusAudioWave)
             {
-                signalValue += sinusAudioWaveIntensity * sinusAudioWave.CalculateSignalValue(preciseDspTime, currentFreq);
+                sinusSignal = sinusAudioWaveIntensity * sinusAudioWave.CalculateSignalValue(preciseDspTime, currentFreq + sinusFreq);
 
                 if (useSinusAmplitudeModulation)
                 {
-                    signalValue *= MapValueD(amplitudeModulationOscillator.CalculateSignalValue(preciseDspTime, sinusAmplitudeModulationOscillatorFrequency), -1.0, 1.0, 0.0, 1.0);
-                    sinusAmplitudeModulationRangeOut = (float)amplitudeModulationOscillator.CalculateSignalValue(preciseDspTime, sinusAmplitudeModulationOscillatorFrequency) * 0.5f + 0.5f;
+                    sinusSignal *= MapValueD(sinusAmplitudeModulationOscillator.CalculateSignalValue(preciseDspTime, sinusAmplitudeModulationOscillatorFrequency), -1.0, 1.0, 0.0, 1.0);
+                    sinusAmplitudeModulationRangeOut = (float)sinusAmplitudeModulationOscillator.CalculateSignalValue(preciseDspTime, sinusAmplitudeModulationOscillatorFrequency) * 0.5f + 0.5f;
                 }
-
             }
             if (useSawAudioWave)
             {
-                signalValue += sawAudioWaveIntensity * sawAudioWave.calculateSignalValue(preciseDspTime, currentFreq);
+                sawSignal = sawAudioWaveIntensity * sawAudioWave.calculateSignalValue(preciseDspTime, currentFreq + sawFreq);
+
+                if (useSawAmplitudeModulation)
+                {
+                    sawSignal *= MapValueD(sawAmplitudeModulationOscillator.CalculateSignalValue(preciseDspTime, sawAmplitudeModulationOscillatorFrequency), -1.0, 1.0, 0.0, 1.0);
+                    sawAmplitudeModulationRangeOut = (float)sawAmplitudeModulationOscillator.CalculateSignalValue(preciseDspTime, sawAmplitudeModulationOscillatorFrequency) * 0.5f + 0.5f;
+                }
             }
             if (useSquareAudioWave)
             {
-                signalValue += squareAudioWaveIntensity * squareAudioWave.calculateSignalValue(preciseDspTime, currentFreq);
+                squareSignal = squareAudioWaveIntensity * squareAudioWave.calculateSignalValue(preciseDspTime, currentFreq + squareFreq);
+
+                if (useSquareAmplitudeModulation)
+                {
+                    squareSignal *= MapValueD(squareAmplitudeModulationOscillator.CalculateSignalValue(preciseDspTime, squareAmplitudeModulationOscillatorFrequency), -1.0, 1.0, 0.0, 1.0);
+                    squareAmplitudeModulationRangeOut = (float)squareAmplitudeModulationOscillator.CalculateSignalValue(preciseDspTime, squareAmplitudeModulationOscillatorFrequency) * 0.5f + 0.5f;
+                }
             }
+
+            double signalValue = sinusSignal + sawSignal + squareSignal;
 
             if (useAmplitudeModulation)
             {
-                signalValue *= MapValueD(amplitudeModulationOscillator.CalculateSignalValue(preciseDspTime, amplitudeModulationOscillatorFrequency), -1.0, 1.0, 0.0, 1.0);
-                amplitudeModulationRangeOut = (float)amplitudeModulationOscillator.CalculateSignalValue(preciseDspTime, amplitudeModulationOscillatorFrequency) * 0.5f + 0.5f;
+                signalValue *= MapValueD(mainAmplitudeModulationOscillator.CalculateSignalValue(preciseDspTime, amplitudeModulationOscillatorFrequency), -1.0, 1.0, 0.0, 1.0);
+                amplitudeModulationRangeOut = (float)mainAmplitudeModulationOscillator.CalculateSignalValue(preciseDspTime, amplitudeModulationOscillatorFrequency) * 0.5f + 0.5f;
             }
             else
             {
@@ -164,13 +235,8 @@ public class WavesGenerator : MonoBehaviour
                 data[i * channels + j] = x;
             }
         }
-
     }
 
-    float MapValue(float referenceValue, float fromMin, float fromMax, float toMin, float toMax)
-    {
-        return toMin + (referenceValue - fromMin) * (toMax - toMin) / (fromMax - fromMin);
-    }
 
     double MapValueD(double referenceValue, double fromMin, double fromMax, double toMin, double toMax)
     {
@@ -184,18 +250,22 @@ public class WavesGenerator : MonoBehaviour
             if (!useSinusAudioWave)
             {
                 useSinusAudioWave = true;
+                sinusToggle.isOn = true;
             }
             if (!useSquareAudioWave)
             {
                 useSquareAudioWave = true;
+                squareToggle.isOn = true;
             }
             if (!useSawAudioWave)
             {
                 useSawAudioWave = true;
+                sawToggle.isOn = true;
             }
             if (!useAmplitudeModulation)
             {
                 useAmplitudeModulation = true;
+                mainAmpModToggle.isOn = true;
             }
             if (!useFrequencyModulation)
             {
@@ -219,48 +289,144 @@ public class WavesGenerator : MonoBehaviour
 
     }
 
-    // ------------------------------------------------- SINE WAVE
+    // ------------------------------------------------- SINUS WAVE
     private static float SineWave(double input)
     {
         return Mathf.Sin((float)input * 2 * Mathf.PI);
     }
-    public void PlaySine(bool playing)
+
+    public void PlaySinus(bool playing)
     {
-        playingSine = playing;
+        useSinusAudioWave = playing;
+
+    }  
+    
+    public void SetSinusWaveIntensity(float intensity)
+    {
+        sinusAudioWaveIntensity = intensity;
 
     }
 
-    public void SetSineAmplitude(float value)
+    public void SetSinusFreq(float freq)
     {
-        sineAmplitude = value;
+        sinusFrequency = freq;
+
     }
 
-
-    public void SetSineFrequency(float value)
+    public void SetSinusAmplitudeMod(bool amp)
     {
-        sineFrequency = value;
+        useSinusAmplitudeModulation = amp;
+
+    }
+
+    public void SetSinusAmplitudeMod(float ampFreq)
+    {
+        sinusAmplitudeModulationOscillatorFrequency = ampFreq;
+
     }
 
     // ------------------------------------------------- SAW WAVE
-    private static float sawWave(double input)
+    private static float SawWave(double input)
     {
         return ((((float)input + 0.5f) % 1) - 0.5f) * 2f;
     }
 
     public void PlaySaw(bool playing)
     {
-        playingSaw = playing;
+        useSawAudioWave = playing;
 
     }
 
-    public void SetSawAmplitude(float value)
+    public void SetSawWaveIntensity(float intensity)
     {
-        sawAmplitude = value;
+        sawAudioWaveIntensity = intensity;
+
     }
 
-    public void SetSawFrequency(float value)
+    public void SetSawFreq(float freq)
     {
-        sawFrequency = value;
+        sawFrequency = freq;
+
+    }
+
+    public void SetSawAmplitudeMod(bool amp)
+    {
+        useSawAmplitudeModulation = amp;
+
+    }
+
+    public void SetSawAmplitudeMod(float ampFreq)
+    {
+        sawAmplitudeModulationOscillatorFrequency = ampFreq;
+
+    }
+
+    // ------------------------------------------------- SQUARE WAVE
+
+    public void PlaySquare(bool playing)
+    {
+        useSquareAudioWave = playing;
+
+    }
+
+    public void SetSquareWaveIntensity(float intensity)
+    {
+        squareAudioWaveIntensity = intensity;
+
+    }
+
+    public void SetSquareFreq(float freq)
+    {
+        squareFrequency = freq;
+
+    }
+
+    public void SetSquareAmplitudeMod(bool amp)
+    {
+        useSquareAmplitudeModulation = amp;
+
+    }
+
+    public void SetSquareAmplitudeMod(float ampFreq)
+    {
+        squareAmplitudeModulationOscillatorFrequency = ampFreq;
+
+    }
+
+    // ------------------------------------------------- ALL WAVES
+    public void SetMainVolume(float vol)
+    {
+        mainVolume = vol;
+    }
+
+    public void SetMainFrequency(float freq)
+    {
+        mainFrequency = freq;
+    }
+
+    public void ToggleMainAmplitudeMod(bool toggle)
+    {
+        useAmplitudeModulation = toggle;
+    }
+
+    public void SetMainAmplitudeModIntensity(float intensity)
+    {
+        amplitudeModulationOscillatorFrequency = intensity;
+    }
+
+    public void ToggleMainFrequencyMod(bool toggle)
+    {
+        useFrequencyModulation = toggle;
+    }
+
+    public void SetMainFrequencyModIntensity(float intensity)
+    {
+        frequencyModulationOscillatorFrequency = intensity;
+    }
+
+    public void RandomToggle(bool toggle)
+    {
+        randomPlay = toggle;
     }
 
 }
