@@ -26,6 +26,7 @@ public class WavesGenerator : MonoBehaviour
 
     [Header("UI")]
     [Header("Main")]
+    public Slider mainFreqSlider;
     public Toggle mainAmpModToggle;
     public Slider mainAmpModSlider;
     public Toggle mainFreqModToggle;
@@ -134,6 +135,8 @@ public class WavesGenerator : MonoBehaviour
     //private double _sawPhase;
 
     private int _sampleRate;
+
+    private bool check;
 
     private void Awake()
     {
@@ -247,6 +250,8 @@ public class WavesGenerator : MonoBehaviour
     {
         if (randomPlay)
         {
+            check = false;
+
             if (!useSinusAudioWave)
             {
                 useSinusAudioWave = true;
@@ -270,21 +275,39 @@ public class WavesGenerator : MonoBehaviour
             if (!useFrequencyModulation)
             {
                 useFrequencyModulation = true;
+                mainFreqModToggle.isOn = true;
             }
 
             mainFrequency = Mathf.PingPong(Time.time * 200.0f, 1900.0f) + 100.0f;
+            mainFreqSlider.value = (float)mainFrequency;
 
             sinusAudioWaveIntensity = Mathf.PingPong(Time.time * 0.5f, 1.0f);
+            sinusIntensitySlider.value = (float)sinusAudioWaveIntensity;
 
             squareAudioWaveIntensity = Mathf.PingPong(Time.time * 0.6f, 1.0f);
+            squareIntensitySlider.value = (float)squareAudioWaveIntensity;
 
             sawAudioWaveIntensity = Mathf.PingPong(Time.time * 0.7f, 1.0f);
+            sawIntensitySlider.value = (float)sawAudioWaveIntensity;
 
             amplitudeModulationOscillatorFrequency = Mathf.PingPong(Time.time * 3.0f, 30.0f);
+            mainAmpModSlider.value = (float)amplitudeModulationOscillatorFrequency;
 
             frequencyModulationOscillatorFrequency = Mathf.PingPong(Time.time * 4.0f, 30.0f);
+            mainFreqModSlider.value = (float)frequencyModulationOscillatorFrequency;
 
             frequencyModulationOscillatorIntensity = Mathf.PingPong(Time.time * 10.0f, 100.0f);
+        }
+        else if(!randomPlay && !check)
+        {
+            check = true;
+
+            sinusToggle.isOn = false;
+            squareToggle.isOn = false;
+            sawToggle.isOn = false;
+            mainAmpModToggle.isOn = false;
+            mainFreqModToggle.isOn = false;
+
         }
 
     }

@@ -5829,26 +5829,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   randomPlay: 0
-  mainToggle: {fileID: 0}
-  mainIntensitySlider: {fileID: 0}
-  mainFrequencySlider: {fileID: 0}
-  mainAmpModToggle: {fileID: 0}
-  mainAmpModSlider: {fileID: 0}
-  sinusToggle: {fileID: 0}
-  sinusIntensitySlider: {fileID: 0}
-  sinusFrequencySlider: {fileID: 0}
-  sinusAmpModToggle: {fileID: 0}
-  sinusAmpModSlider: {fileID: 0}
-  sawToggle: {fileID: 0}
-  sawIntensitySlider: {fileID: 0}
-  sawFrequencySlider: {fileID: 0}
-  sawAmpModToggle: {fileID: 0}
-  sawAmpModSlider: {fileID: 0}
-  squareToggle: {fileID: 0}
-  squareIntensitySlider: {fileID: 0}
-  squareFrequencySlider: {fileID: 0}
-  squareAmpModToggle: {fileID: 0}
-  squareAmpModSlider: {fileID: 0}
+  mainFreqSlider: {fileID: 504212229}
+  mainAmpModToggle: {fileID: 2017308491}
+  mainAmpModSlider: {fileID: 1408393350}
+  mainFreqModToggle: {fileID: 710413499}
+  mainFreqModSlider: {fileID: 1342968809}
+  sinusToggle: {fileID: 1902461063}
+  sinusIntensitySlider: {fileID: 2122807847}
+  sinusFrequencySlider: {fileID: 1335517162}
+  sinusAmpModToggle: {fileID: 1577862250}
+  sinusAmpModSlider: {fileID: 1532306165}
+  sawToggle: {fileID: 248155437}
+  sawIntensitySlider: {fileID: 1210624092}
+  sawFrequencySlider: {fileID: 1189678114}
+  sawAmpModToggle: {fileID: 1674590878}
+  sawAmpModSlider: {fileID: 212567293}
+  squareToggle: {fileID: 369696590}
+  squareIntensitySlider: {fileID: 811432382}
+  squareFrequencySlider: {fileID: 961228328}
+  squareAmpModToggle: {fileID: 1281781179}
+  squareAmpModSlider: {fileID: 1256027902}
   mainVolume: 0.5
   mainFrequency: 500
   useSinusAudioWave: 0
@@ -6187,10 +6187,10 @@ MonoBehaviour:
   m_FillRect: {fileID: 220936755}
   m_HandleRect: {fileID: 1313929293}
   m_Direction: 0
-  m_MinValue: 0
-  m_MaxValue: 1
+  m_MinValue: 0.2
+  m_MaxValue: 30
   m_WholeNumbers: 0
-  m_Value: 0.5
+  m_Value: 1
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
@@ -6515,10 +6515,10 @@ MonoBehaviour:
   m_FillRect: {fileID: 361027087}
   m_HandleRect: {fileID: 69355903}
   m_Direction: 0
-  m_MinValue: 0
-  m_MaxValue: 1
+  m_MinValue: 0.2
+  m_MaxValue: 30
   m_WholeNumbers: 0
-  m_Value: 0.5
+  m_Value: 1
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
