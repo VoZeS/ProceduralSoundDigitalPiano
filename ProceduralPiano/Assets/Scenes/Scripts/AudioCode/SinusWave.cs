@@ -1,74 +1,56 @@
-﻿/*	Author: Kostas Sfikas
-	Date: April 2017
-	Language: c#
-	Platform: Unity 5.5.0 f3 (personal edition) */
-
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-public class SinusWave{
-	
-	double currentSignalTime;		
-	double currentSignalFrequency;		
-	double currentSignalPhaseOffset;	
+public class SinusWave
+{
 
-	double currentSignaOutlValue;			
+    double currentSignalTime;
+    double currentSignalFrequency;
+    double currentSignalPhaseOffset;
 
-	public SinusWave(){
-		currentSignalFrequency = 400.0;
-		currentSignalPhaseOffset = 0.0;
-	}
+    double currentSignaOutlValue;
 
-	public double CalculateSignalValue(double newSignalTime, double newSignalFrequency){
+    public SinusWave()
+    {
+        currentSignalFrequency = 400.0;
+        currentSignalPhaseOffset = 0.0;
+    }
 
-		if (currentSignalFrequency != newSignalFrequency) {
-			/*This part takes care of what should happen when the signal's frequency changes
-			(when the incoming frequency is different from the current frequency)
-			 This is VERY IMPORTANT, because if you do not handle this matter then you will hear
-			 LOTS of CLICKS when the frequency changes.
+    public double CalculateSignalValue(double newSignalTime, double newSignalFrequency)
+    {
 
-			Description: When the frequency changes, it is driven either by a slider, or by an
-			external signal. Either way, the change happens in (very small) increments. When such
-			a change takes place, then the produced wave suddenly changes phase.
-			To make this more clear, suppose that there is a change from 
-			Sin(2 * PI * 0.75) = -1 
-			to Sin(2 * PI * 0.8) = -0.951056516295
-			This sudden change from -1 to  -0.951056516295 causes a discontinuity in the sinusoidal function's graph, and this can be VERY bad.
-			The way I handled this is:
-			Every time the frequency changes, the phase of the wave is shifted in such a way that the current value of the sinusoidal 
-			function remains the same between the two steps. This way, no matter how quickly the frequency changes, no clicks are ever 
-			heard (because of that, at least). 
-			This is kind of complicated, and very low-level audio stuff, so if you do not understand it, you may just use it. */
+        if (currentSignalFrequency != newSignalFrequency)
+        {
 
-			// calculate the signal's current period: period = 1 / frequency
+            double currentSignalPeriod = 1.0 / currentSignalFrequency;
 
-			double currentSignalPeriod = 1.0 / currentSignalFrequency;
+            double currentNumberOfSignalCycles = (currentSignalTime / currentSignalPeriod) + (currentSignalPhaseOffset / (2.0 * Math.PI));
+            double currentSignalCyclePosition = currentNumberOfSignalCycles % 1.0;
 
-			double currentNumberOfSignalCycles = (currentSignalTime / currentSignalPeriod) + (currentSignalPhaseOffset / (2.0 * Math.PI));
-			double currentSignalCyclePosition = currentNumberOfSignalCycles % 1.0;	
+            double newSignalPeriod = 1.0 / newSignalFrequency;
+            double newNumberOfSignalCycles = currentSignalTime / newSignalPeriod;
+            double newSignalCyclePosition = newNumberOfSignalCycles % 1.0;
 
-			double newSignalPeriod = 1.0 / newSignalFrequency;
-			double newNumberOfSignalCycles = currentSignalTime / newSignalPeriod;
-			double newSignalCyclePosition = newNumberOfSignalCycles % 1.0;			
+            double cycleDifference = currentSignalCyclePosition - newSignalCyclePosition;
+            double phaseDifference = cycleDifference * Math.PI * 2.0;
 
-			double cycleDifference = currentSignalCyclePosition - newSignalCyclePosition;
-			double phaseDifference = cycleDifference * Math.PI * 2.0;
+            currentSignalPhaseOffset = phaseDifference;
 
-			currentSignalPhaseOffset = phaseDifference;
+            currentSignalFrequency = newSignalFrequency;
+            currentSignalTime = newSignalTime;
 
-			currentSignalFrequency = newSignalFrequency;
-			currentSignalTime = newSignalTime;
-
-			currentSignaOutlValue = Math.Sin (currentSignalTime * 2.0 * Math.PI * currentSignalFrequency + currentSignalPhaseOffset);
-			return currentSignaOutlValue;
-		} else {
-			currentSignalFrequency = newSignalFrequency;
-			currentSignalTime = newSignalTime;
-			currentSignaOutlValue = Math.Sin (currentSignalTime * 2.0 * Math.PI * currentSignalFrequency + currentSignalPhaseOffset);
-			return currentSignaOutlValue;
-		}
-	}
+            currentSignaOutlValue = Math.Sin(currentSignalTime * 2.0 * Math.PI * currentSignalFrequency + currentSignalPhaseOffset);
+            return currentSignaOutlValue;
+        }
+        else
+        {
+            currentSignalFrequency = newSignalFrequency;
+            currentSignalTime = newSignalTime;
+            currentSignaOutlValue = Math.Sin(currentSignalTime * 2.0 * Math.PI * currentSignalFrequency + currentSignalPhaseOffset);
+            return currentSignaOutlValue;
+        }
+    }
 
 }
