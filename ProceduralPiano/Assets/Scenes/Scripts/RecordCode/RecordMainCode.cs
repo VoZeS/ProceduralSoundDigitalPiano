@@ -55,6 +55,7 @@ public class OutputAudioRecorder : MonoBehaviour
 
         fileStream = new FileStream(filePath, FileMode.Create);
         var emptyByte = new byte();
+
         for (int i = 0; i < headerSize; i++) //preparing the header
         {
             fileStream.WriteByte(emptyByte);

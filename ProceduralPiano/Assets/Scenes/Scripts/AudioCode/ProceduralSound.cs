@@ -48,7 +48,7 @@ public class ProceduralSound : MonoBehaviour
     [Range(1.0f, 100.0f)]
     public float frequencyModulationOscillatorIntensity = 10.0f;
 
-    [Header("Out Values")]
+    [Header("Out Values:")]
     [Range(0.0f, 1.0f)]
     public float amplitudeModulationRangeOut;
     [Range(0.0f, 1.0f)]
